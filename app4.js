@@ -2,7 +2,6 @@
 
 // requires
 const
-  _       = require('lodash'),
   Promise = require('bluebird'),
   huejay  = require('huejay'),
   rpio    = require('rpio')
@@ -11,7 +10,10 @@ const
 const hueUsername = process.env.HUE_USERNAME
 
 // pin configs
-const onOffPin = 7
+const
+  onOffPin = 7,
+  dimPin = 11,
+  brightenPin = 13
 
 // discover and connect to bridge
 const connect = () => {
@@ -42,13 +44,39 @@ const watch = (client) => {
     rpio.open(onOffPin, rpio.INPUT, rpio.PULL_DOWN)
 
     rpio.poll(onOffPin, (pin) => {
-      if (!rpio.read(pin)) return
-
       for (const group of groups) {
         group.on = !group.on
         client.groups.save(group)
       }
-    })
+    }, rpio.POLL_HIGH)
+
+    rpio.poll(dimPin, (pin) => {
+      console.log('dimming')
+      for (const group of groups) {
+        let brightness = group.brightness - 50
+        if (brightness < 0) brightness = 0
+        console.log(brightness)
+
+        group.on = true
+        group.brightness = brightness
+        group.transitionTime = 0
+        client.groups.save(group)
+      }
+    }, rpio.POLL_HIGH)
+
+    rpio.poll(brightenPin, (pin) => {
+      console.log('brightening')
+      for (const group of groups) {
+        let brightness = group.brightness + 50
+        if (brightness > 254) brightness = 254
+        console.log(brightness)
+
+        group.on = true
+        group.brightness = brightness
+        group.transitionTime = 0
+        client.groups.save(group)
+      }
+    }, rpio.POLL_HIGH)
 
     console.log('ready')
   })

@@ -2,7 +2,6 @@
 
 // requires
 const
-  _       = require('lodash'),
   Promise = require('bluebird'),
   huejay  = require('huejay'),
   rpio    = require('rpio')
